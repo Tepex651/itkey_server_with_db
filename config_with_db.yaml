@@ -1,0 +1,14 @@
+server_1:
+  id: 1
+  host: 127.0.0.1
+  port: 6000
+server_2:
+  id: 2
+  host: 127.0.0.1
+  port: 7000
+db:
+  host: 127.0.0.1
+  port: 5500
+  user: postgres
+  password: secret
+  database: datab
