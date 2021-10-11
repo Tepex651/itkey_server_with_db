@@ -11,10 +11,8 @@ db_user = os.environ['POSTGRES_USER']
 db_password = os.environ['POSTGRES_PASSWORD']
 
 
-async def wait_and_write(conn, queue):
-    """Gets 'seconds' from queue. Sleeps. After that writes message to database"""
-    seconds = await queue.get()
-    queue.task_done()
+async def wait_and_write(conn, seconds):
+    """Sleeps 'seconds'. After that writes message to database"""
     await asyncio.sleep(int(seconds))
     await conn.execute('''
             INSERT INTO test(server_id, seconds) VALUES($1, $2)
@@ -23,14 +21,7 @@ async def wait_and_write(conn, queue):
 
 
 async def handle_echo(reader, _):
-    """Creates queue and start task 'read'"""
-    queue = asyncio.Queue()
-    await asyncio.create_task(read(reader, queue))
-    await queue.join()
-
-
-async def read(reader, queue):
-    """Connections to batabase. Reads messages and create task 'wait_and_write'. Fills the queue."""
+    """Connections to batabase. Reads messages and create task 'wait_and_write'."""
     conn = await asyncpg.connect(host=db_host, password=db_password, user=db_user, database=db_name)
     while True:
         data = await reader.readline()
@@ -39,8 +30,7 @@ async def read(reader, queue):
             break
         seconds = data.decode().split('\n')[0]
         print(f'I get {seconds}')
-        queue.put_nowait(seconds)
-        task = asyncio.create_task(wait_and_write(conn, queue))
+        task = asyncio.create_task(wait_and_write(conn, seconds))
 
 
 async def main():
